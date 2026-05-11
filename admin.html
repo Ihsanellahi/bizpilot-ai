@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizPilot AI — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --bg2: #0d1120;
+    --bg3: #131829;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4F7FFF;
+    --accent2: #7C5CFC;
+    --accent3: #00E5B0;
+    --text: #F0F2FF;
+    --text2: #8B92B3;
+    --text3: #555E80;
+    --card: rgba(255,255,255,0.03);
+    --success: #00E5B0;
+    --error: #FF4F6A;
+    --warning: #FFB347;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
+
+  /* LOGIN */
+  .login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  .login-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 48px 40px; width: 380px; text-align: center; }
+  .login-logo { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .login-sub { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
+  .login-input { width: 100%; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 12px; }
+  .login-input:focus { border-color: var(--accent); }
+  .login-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: white; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .login-error { color: var(--error); font-size: 13px; margin-top: 8px; display: none; }
+
+  /* LAYOUT */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: var(--bg2); border-right: 1px solid var(--border); padding: 24px 0; display: flex; flex-direction: column; }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; padding: 0 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .nav-item { padding: 10px 20px; cursor: pointer; font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 10px; transition: all 0.15s; border-left: 3px solid transparent; }
+  .nav-item:hover { color: var(--text); background: var(--card); }
+  .nav-item.active { color: var(--text); background: rgba(79,127,255,0.08); border-left-color: var(--accent); }
+  .nav-icon { font-size: 16px; }
+  .main { margin-left: 220px; padding: 32px; min-height: 100vh; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* HEADER */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; }
+  .page-sub { font-size: 14px; color: var(--text2); margin-top: 2px; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 700; }
+  .stat-num.blue { color: var(--accent); }
+  .stat-num.green { color: var(--accent3); }
+  .stat-num.purple { color: #A78BFA; }
+  .stat-num.orange { color: var(--warning); }
+
+  /* TABLE */
+  .table-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .table-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-title { font-size: 15px; font-weight: 500; }
+  .refresh-btn { padding: 7px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .refresh-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 12px 16px; font-size: 12px; font-weight: 500; color: var(--text3); text-align: left; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  td { padding: 14px 16px; font-size: 13px; color: var(--text2); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .td-name { color: var(--text); font-weight: 500; }
+  .td-company { color: var(--text); }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-new { background: rgba(79,127,255,0.15); color: var(--accent); }
+  .badge-high { background: rgba(0,229,176,0.15); color: var(--accent3); }
+  .badge-medium { background: rgba(255,179,71,0.15); color: var(--warning); }
+  .badge-low { background: rgba(139,146,179,0.15); color: var(--text2); }
+  .badge-open { background: rgba(255,79,106,0.15); color: var(--error); }
+  .badge-replied { background: rgba(0,229,176,0.15); color: var(--accent3); }
+  .badge-urgent { background: rgba(255,79,106,0.15); color: var(--error); }
+
+  /* SCORE BAR */
+  .score-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; max-width: 60px; }
+  .score-fill { height: 100%; border-radius: 2px; }
+  .score-num { font-size: 12px; font-weight: 500; min-width: 20px; }
+
+  /* OUTREACH BTN */
+  .outreach-btn { padding: 6px 14px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 7px; color: white; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap; }
+  .outreach-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .outreach-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .outreach-btn.sent { background: var(--accent3); color: #000; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .loading { text-align: center; padding: 40px; color: var(--text3); font-size: 14px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 9999; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: rgba(0,229,176,0.15); border: 1px solid rgba(0,229,176,0.3); color: var(--accent3); }
+  .toast.error { background: rgba(255,79,106,0.15); border: 1px solid rgba(255,79,106,0.3); color: var(--error); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 500px; max-width: 95vw; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
+  .modal-input { width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-textarea { width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; min-height: 80px; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-btn-primary { flex: 1; padding: 11px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .modal-btn-cancel { padding: 11px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚡ BizPilot AI</div>
+    <div class="login-sub">Admin Dashboard — Secure Access</div>
+    <input type="password" class="login-input" id="login-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Login →</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar" style="display:none">
+  <div class="sidebar-logo"><div class="logo-icon">⚡</div> BizPilot AI</div>
+  <div style="padding: 16px 0; flex: 1;">
+    <div class="nav-item active" onclick="showPage('leads')"><span class="nav-icon">🎯</span> Leads</div>
+    <div class="nav-item" onclick="showPage('support')"><span class="nav-icon">🧠</span> Support</div>
+    <div class="nav-item" onclick="showPage('intake')"><span class="nav-icon">📋</span> Intake</div>
+    <div class="nav-item" onclick="showPage('outreach')"><span class="nav-icon">🚀</span> Outreach</div>
+  </div>
+  <div style="padding: 16px 20px; border-top: 1px solid var(--border);">
+    <a href="https://bizpilot-ai-inky.vercel.app" target="_blank" style="font-size:13px;color:var(--text3);text-decoration:none;">← Back to site</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main" style="display:none">
+
+  <!-- LEADS PAGE -->
+  <div class="page active" id="page-leads">
+    <div class="page-header">
+      <div>
+        <div class="page-title">🎯 Leads</div>
+        <div class="page-sub">All inbound leads with AI scores</div>
+      </div>
+      <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
+    </div>
+    <div class="stats-grid" id="leads-stats">
+      <div class="stat-card"><div class="stat-label">Total Leads</div><div class="stat-num blue" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">High Score (8+)</div><div class="stat-num green" id="stat-hot">—</div></div>
+      <div class="stat-card"><div class="stat-label">Medium (5-7)</div><div class="stat-num orange" id="stat-medium">—</div></div>
+      <div class="stat-card"><div class="stat-label">Low (1-4)</div><div class="stat-num purple" id="stat-low">—</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Leads</div></div>
+      <div id="leads-table"><div class="loading">Loading leads...</div></div>
+    </div>
+  </div>
+
+  <!-- SUPPORT PAGE -->
+  <div class="page" id="page-support">
+    <div class="page-header">
+      <div>
+        <div class="page-title">🧠 Support Tickets</div>
+        <div class="page-sub">All support requests with AI responses</div>
+      </div>
+      <button class="refresh-btn" onclick="loadSupport()">↻ Refresh</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Tickets</div></div>
+      <div id="support-table"><div class="loading">Loading tickets...</div></div>
+    </div>
+  </div>
+
+  <!-- INTAKE PAGE -->
+  <div class="page" id="page-intake">
+    <div class="page-header">
+      <div>
+        <div class="page-title">📋 Intake Requests</div>
+        <div class="page-sub">All client intake submissions</div>
+      </div>
+      <button class="refresh-btn" onclick="loadIntake()">↻ Refresh</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">All Intake Requests</div></div>
+      <div id="intake-table"><div class="loading">Loading intake...</div></div>
+    </div>
+  </div>
+
+  <!-- OUTREACH PAGE -->
+  <div class="page" id="page-outreach">
+    <div class="page-header">
+      <div>
+        <div class="page-title">🚀 Outreach Autopilot</div>
+        <div class="page-sub">Send AI-powered proposals to your leads with one click</div>
+      </div>
+      <button class="refresh-btn" onclick="loadOutreach()">↻ Refresh</button>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Leads — Click "Send Proposal" to trigger outreach</div></div>
+      <div id="outreach-table"><div class="loading">Loading leads...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- OUTREACH MODAL -->
+<div class="modal-overlay" id="outreach-modal">
+  <div class="modal">
+    <div class="modal-title">Send AI Proposal</div>
+    <div class="modal-sub" id="modal-sub">Sending to —</div>
+    <div class="modal-field">
+      <label class="modal-label">Industry</label>
+      <input class="modal-input" id="modal-industry" placeholder="e.g. Healthcare, Law Firm, Real Estate">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">What they need</label>
+      <textarea class="modal-textarea" id="modal-need" placeholder="e.g. Automate client intake and lead follow up"></textarea>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Budget</label>
+      <input class="modal-input" id="modal-budget" placeholder="e.g. $500-$1000 per month">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn-primary" onclick="sendProposal()" id="modal-send-btn">Send Proposal →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const ADMIN_PASSWORD = 'bizpilot2026';
+  const SHEET_ID = '1YnsACq4meonXzRT_5SI_JVBTChtptT3YmoioNhVAQ3M';
+  const API_KEY = 'AIzaSyD4DERLEiRRYcSh1EuXJUDbtls2-RJ8o3E';
+  const OUTREACH_WEBHOOK = 'https://iraka.app.n8n.cloud/webhook/outreach';
+  const BASE = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values`;
+
+  let currentLead = null;
+
+  function doLogin() {
+    const pass = document.getElementById('login-pass').value;
+    if (pass === ADMIN_PASSWORD) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('main').style.display = 'block';
+      loadLeads();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (name === 'leads') loadLeads();
+    if (name === 'support') loadSupport();
+    if (name === 'intake') loadIntake();
+    if (name === 'outreach') loadOutreach();
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  async function fetchSheet(tab) {
+    const res = await fetch(`${BASE}/${encodeURIComponent(tab)}?key=${API_KEY}`);
+    const data = await res.json();
+    return data.values || [];
+  }
+
+  function scoreColor(score) {
+    const s = parseInt(score);
+    if (s >= 8) return '#00E5B0';
+    if (s >= 5) return '#FFB347';
+    return '#FF4F6A';
+  }
+
+  function priorityBadge(p) {
+    if (!p) return '';
+    const map = { High: 'badge-high', Medium: 'badge-medium', Low: 'badge-low', Urgent: 'badge-urgent', Pending: 'badge-low' };
+    return `<span class="badge ${map[p] || 'badge-low'}">${p}</span>`;
+  }
+
+  function statusBadge(s) {
+    if (!s) return '';
+    const map = { New: 'badge-new', Open: 'badge-open', 'auto-replied': 'badge-replied', Replied: 'badge-replied' };
+    return `<span class="badge ${map[s] || 'badge-new'}">${s}</span>`;
+  }
+
+  async function loadLeads() {
+    document.getElementById('leads-table').innerHTML = '<div class="loading">Loading...</div>';
+    try {
+      const rows = await fetchSheet('Leads');
+      if (rows.length <= 1) { document.getElementById('leads-table').innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>No leads yet</div>'; return; }
+      const headers = rows[0];
+      const data = rows.slice(1);
+      let total = data.length, hot = 0, med = 0, low = 0;
+      data.forEach(r => {
+        const s = parseInt(r[6]) || 0;
+        if (s >= 8) hot++; else if (s >= 5) med++; else low++;
+      });
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-hot').textContent = hot;
+      document.getElementById('stat-medium').textContent = med;
+      document.getElementById('stat-low').textContent = low;
+      let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Source</th><th>Score</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+      data.reverse().forEach(r => {
+        const score = parseInt(r[6]) || 0;
+        const date = r[9] ? new Date(r[9]).toLocaleDateString() : '—';
+        html += `<tr>
+          <td class="td-name">${r[0]||'—'}</td>
+          <td>${r[1]||'—'}</td>
+          <td class="td-company">${r[3]||'—'}</td>
+          <td>${r[4]||'—'}</td>
+          <td><div class="score-wrap"><div class="score-bar"><div class="score-fill" style="width:${score*10}%;background:${scoreColor(score)}"></div></div><span class="score-num" style="color:${scoreColor(score)}">${score}</span></div></td>
+          <td>${priorityBadge(r[7])}</td>
+          <td>${statusBadge(r[8])}</td>
+          <td>${date}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('leads-table').innerHTML = html;
+    } catch(e) {
+      document.getElementById('leads-table').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Error loading leads. Check API key and sheet permissions.</div>';
+    }
+  }
+
+  async function loadSupport() {
+    document.getElementById('support-table').innerHTML = '<div class="loading">Loading...</div>';
+    try {
+      const rows = await fetchSheet('Support');
+      if (rows.length <= 1) { document.getElementById('support-table').innerHTML = '<div class="empty"><div class="empty-icon">🧠</div>No tickets yet</div>'; return; }
+      let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Issue Type</th><th>Urgency</th><th>AI Category</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+      rows.slice(1).reverse().forEach(r => {
+        const date = r[8] ? new Date(r[8]).toLocaleDateString() : '—';
+        const urgMap = { Critical: 'badge-urgent', High: 'badge-high', Medium: 'badge-medium', Low: 'badge-low' };
+        html += `<tr>
+          <td class="td-name">${r[0]||'—'}</td>
+          <td>${r[1]||'—'}</td>
+          <td>${r[2]||'—'}</td>
+          <td><span class="badge ${urgMap[r[4]]||'badge-low'}">${r[4]||'—'}</span></td>
+          <td>${r[5]||'—'}</td>
+          <td>${statusBadge(r[7])}</td>
+          <td>${date}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('support-table').innerHTML = html;
+    } catch(e) {
+      document.getElementById('support-table').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Error loading tickets.</div>';
+    }
+  }
+
+  async function loadIntake() {
+    document.getElementById('intake-table').innerHTML = '<div class="loading">Loading...</div>';
+    try {
+      const rows = await fetchSheet('Intake');
+      if (rows.length <= 1) { document.getElementById('intake-table').innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No intake requests yet</div>'; return; }
+      let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Service Needed</th><th>Urgency</th><th>Budget</th><th>AI Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+      rows.slice(1).reverse().forEach(r => {
+        const date = r[9] ? new Date(r[9]).toLocaleDateString() : '—';
+        html += `<tr>
+          <td class="td-name">${r[0]||'—'}</td>
+          <td>${r[1]||'—'}</td>
+          <td>${r[3]||'—'}</td>
+          <td>${priorityBadge(r[4])}</td>
+          <td>${r[5]||'—'}</td>
+          <td>${priorityBadge(r[6])}</td>
+          <td>${statusBadge(r[8])}</td>
+          <td>${date}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('intake-table').innerHTML = html;
+    } catch(e) {
+      document.getElementById('intake-table').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Error loading intake.</div>';
+    }
+  }
+
+  async function loadOutreach() {
+    document.getElementById('outreach-table').innerHTML = '<div class="loading">Loading...</div>';
+    try {
+      const rows = await fetchSheet('Leads');
+      if (rows.length <= 1) { document.getElementById('outreach-table').innerHTML = '<div class="empty"><div class="empty-icon">🚀</div>No leads yet</div>'; return; }
+      let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Message</th><th>Score</th><th>Action</th></tr></thead><tbody>';
+      rows.slice(1).reverse().forEach((r, i) => {
+        const score = parseInt(r[6]) || 0;
+        const leadData = encodeURIComponent(JSON.stringify({ name: r[0], email: r[1], company: r[3], message: r[5], score: r[6] }));
+        html += `<tr>
+          <td class="td-name">${r[0]||'—'}</td>
+          <td>${r[1]||'—'}</td>
+          <td class="td-company">${r[3]||'—'}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[5]||'—'}</td>
+          <td><span style="color:${scoreColor(score)};font-weight:500">${score}/10</span></td>
+          <td><button class="outreach-btn" id="obtn-${i}" onclick="openModal(${i}, '${r[0]||''}', '${r[1]||''}', '${r[3]||''}', '${(r[5]||'').replace(/'/g,'')}')">Send Proposal</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('outreach-table').innerHTML = html;
+    } catch(e) {
+      document.getElementById('outreach-table').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Error loading leads.</div>';
+    }
+  }
+
+  function openModal(idx, name, email, company, message) {
+    currentLead = { idx, name, email, company, message };
+    document.getElementById('modal-sub').textContent = `Sending to ${name} — ${email}`;
+    document.getElementById('modal-need').value = message;
+    document.getElementById('modal-industry').value = '';
+    document.getElementById('modal-budget').value = '';
+    document.getElementById('outreach-modal').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('outreach-modal').classList.remove('show');
+    currentLead = null;
+  }
+
+  async function sendProposal() {
+    if (!currentLead) return;
+    const industry = document.getElementById('modal-industry').value || 'Business';
+    const need = document.getElementById('modal-need').value || currentLead.message;
+    const budget = document.getElementById('modal-budget').value || '$500-$1000 per month';
+    const btn = document.getElementById('modal-send-btn');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      const formData = new FormData();
+      formData.append('name', currentLead.name);
+      formData.append('email', currentLead.email);
+      formData.append('company', currentLead.company);
+      formData.append('industry', industry);
+      formData.append('need', need);
+      formData.append('budget', budget);
+      await fetch(OUTREACH_WEBHOOK, { method: 'POST', mode: 'no-cors', body: formData });
+      const obtn = document.getElementById('obtn-' + currentLead.idx);
+      if (obtn) { obtn.textContent = '✓ Sent'; obtn.classList.add('sent'); obtn.disabled = true; }
+      showToast(`Proposal sent to ${currentLead.name}!`, 'success');
+      closeModal();
+    } catch(e) {
+      showToast('Failed to send proposal.', 'error');
+    } finally {
+      btn.textContent = 'Send Proposal →';
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
