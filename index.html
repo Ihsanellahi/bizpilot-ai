@@ -825,11 +825,11 @@
     setLoading(btnId, spinnerId, true);
 
     try {
-      await fetch(webhook, {
+      const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(webhook);
+      await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        mode: 'no-cors'
       });
       showToast(successMsg, 'success');
       form.reset();
